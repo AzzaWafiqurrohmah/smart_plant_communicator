@@ -15,6 +15,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isOn = true;
   bool isAnimating = false;
+  String inputTextToken = '';
+  String inputTextName = '';
   @override
   Widget build(BuildContext context) {
     bool isWebFullView = MediaQuery.of(context).size.width > 600;
@@ -296,8 +298,7 @@ class _HomePageState extends State<HomePage> {
                             height: 350.0,
                             color: Colors.transparent,
                             child: new Container(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 18, horizontal: 24),
+                                padding: EdgeInsets.symmetric(vertical: 18),
                                 decoration: new BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: new BorderRadius.only(
@@ -307,27 +308,38 @@ class _HomePageState extends State<HomePage> {
                                   children: [
                                     Align(
                                       alignment: Alignment.centerRight,
-                                      child: Container(
-                                        height: 31,
-                                        width: 51,
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              greyColor,
-                                              whiteColor,
-                                            ],
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                          _showInputDialog(context);
+                                        },
+                                        child: Container(
+                                          height: 31,
+                                          width: 51,
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal: 24),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: [
+                                                greyColor,
+                                                whiteColor,
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        child: Center(
-                                          child: GradientText('+',
-                                              style: TextStyle(
-                                                  fontSize: 17,
-                                                  fontWeight: semiBold),
-                                              colors: [blueColor, greenColor]),
+                                          child: Center(
+                                            child: GradientText('+',
+                                                style: TextStyle(
+                                                    fontSize: 17,
+                                                    fontWeight: semiBold),
+                                                colors: [
+                                                  blueColor,
+                                                  greenColor
+                                                ]),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -336,7 +348,11 @@ class _HomePageState extends State<HomePage> {
                                       child: ListView.builder(
                                           itemCount: iotList.length,
                                           itemBuilder: (context, index) {
-                                            final item = iotList[index];
+                                            List<ChoiceItem> sortedList =
+                                                List.from(iotList)
+                                                  ..sort((a, b) =>
+                                                      b.isChoice ? 1 : 0);
+                                            final item = sortedList[index];
                                             return Padding(
                                               padding: EdgeInsets.symmetric(
                                                   vertical: 8),
@@ -508,6 +524,7 @@ class _HomePageState extends State<HomePage> {
       },
       child: Container(
         width: double.infinity,
+        margin: EdgeInsets.symmetric(horizontal: 24),
         padding: EdgeInsets.symmetric(vertical: 21, horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -544,6 +561,71 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showInputDialog(BuildContext context) async {
+    final TextEditingController _tokenController = TextEditingController();
+    final TextEditingController _nameController = TextEditingController();
+
+    // Show the input dialog
+    Map<String, String>? result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Daftar Token and Nama'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _tokenController,
+                decoration:
+                    InputDecoration(hintText: 'Masukkan Token BloomBuddy Anda'),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                decoration:
+                    InputDecoration(hintText: 'Masukkan Nama Tanaman Anda'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (_tokenController.text.isEmpty ||
+                    _nameController.text.isEmpty) {
+                } else {
+                  Navigator.of(context).pop({
+                    'token': _tokenController.text,
+                    'name': _nameController.text,
+                  });
+                }
+              },
+              child: Text('OK'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Close the dialog without any input
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != null && result.isNotEmpty) {
+      String newName = result['name'] ?? '';
+
+      setState(() {
+        for (var item in iotList) {
+          item.isChoice = false;
+        }
+
+        iotList.add(ChoiceItem(name: newName, isChoice: true));
+      });
+    }
   }
 }
 
