@@ -1,5 +1,7 @@
+import 'package:bottom_sheet/bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
+import 'package:smart_plant_communicator/data/dummy.dart';
 import 'package:smart_plant_communicator/shared/theme.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
@@ -285,29 +287,97 @@ class _HomePageState extends State<HomePage> {
                                 thickness: 1))
                       ],
                     )),
-                Container(
-                  margin: EdgeInsets.only(top: 16, left: 83, right: 83),
-                  padding: EdgeInsets.symmetric(vertical: 11, horizontal: 16),
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xffDEE2E7), Color(0xffDBE0E7)]),
-                      borderRadius: BorderRadius.circular(22)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'JasmineKu',
-                        style: TextStyle(
-                            fontSize: 17,
-                            color: darkGreyColor.withOpacity(0.6)),
-                      ),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: darkGreyColor.withOpacity(0.6),
-                      )
-                    ],
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                        context: context,
+                        builder: (builder) {
+                          return new Container(
+                            height: 350.0,
+                            color: Colors.transparent,
+                            child: new Container(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 18, horizontal: 24),
+                                decoration: new BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: new BorderRadius.only(
+                                        topLeft: const Radius.circular(20.0),
+                                        topRight: const Radius.circular(20.0))),
+                                child: Column(
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Container(
+                                        height: 31,
+                                        width: 51,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              greyColor,
+                                              whiteColor,
+                                            ],
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: GradientText('+',
+                                              style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: semiBold),
+                                              colors: [blueColor, greenColor]),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 24),
+                                    Expanded(
+                                      child: ListView.builder(
+                                          itemCount: iotList.length,
+                                          itemBuilder: (context, index) {
+                                            final item = iotList[index];
+                                            return Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 8),
+                                              child: CardIoT(item.name,
+                                                  item.isChoice, index),
+                                            );
+                                          }),
+                                    )
+                                  ],
+                                )),
+                          );
+                        });
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(top: 16, left: 83, right: 83),
+                    padding: EdgeInsets.symmetric(vertical: 11, horizontal: 16),
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xffDEE2E7), Color(0xffDBE0E7)]),
+                        borderRadius: BorderRadius.circular(22)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          iotList
+                              .firstWhere((item) => item.isChoice,
+                                  orElse: () =>
+                                      ChoiceItem(name: '', isChoice: false))
+                              .name,
+                          style: TextStyle(
+                              fontSize: 17,
+                              color: darkGreyColor.withOpacity(0.6)),
+                        ),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: darkGreyColor.withOpacity(0.6),
+                        )
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(height: 25),
@@ -421,6 +491,57 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget CardIoT(name, isChoice, index) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          for (int i = 0; i < iotList.length; i++) {
+            iotList[i].isChoice = false;
+          }
+          iotList[index].isChoice = true;
+        });
+        Navigator.pop(context);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 21, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x263B4056),
+              offset: Offset(0, 20),
+              blurRadius: 40,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              name,
+              style: TextStyle(color: darkGreyColor.withOpacity(0.6)),
+            ),
+            Container(
+              width: 27,
+              height: 27,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: isChoice
+                      ? [blueColor, greenColor]
+                      : [whiteColor, greyColor],
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
