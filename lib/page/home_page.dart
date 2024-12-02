@@ -1,5 +1,6 @@
 import 'package:bottom_sheet/bottom_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 import 'package:smart_plant_communicator/data/dummy.dart';
 import 'package:smart_plant_communicator/shared/theme.dart';
@@ -13,10 +14,73 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   bool isOn = true;
   bool isAnimating = false;
   String inputTextToken = '';
   String inputTextName = '';
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _initializeNotifications();
+  }
+
+  bool notificationShown = false;
+  void _refreshData() {
+    setState(() {
+      // trashBin = getTrashBinData();
+      notificationShown = false;
+      checkTrashStatusAndNotify(infoBloom);
+    });
+  }
+
+  void _initializeNotifications() async {
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  void _showNotification(String title, String message) async {
+    var androidDetails = AndroidNotificationDetails(
+      'channel_id',
+      'channel_name',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    var notificationDetails = NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      message,
+      notificationDetails,
+    );
+  }
+
+  void checkTrashStatusAndNotify(Map<String, dynamic> infoBloom) {
+    if (infoBloom['status'] == 0 && !notificationShown) {
+      _showNotification(
+        infoBloom['name'],
+        'Perlu Disiram Air',
+      );
+      notificationShown = true;
+    } else if (infoBloom['status'] == 1 && !notificationShown) {
+      _showNotification(
+        infoBloom['name'],
+        'Perlu Diberi Cahaya',
+      );
+      notificationShown = true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isWebFullView = MediaQuery.of(context).size.width > 600;
@@ -61,71 +125,99 @@ class _HomePageState extends State<HomePage> {
                             fontFamily: "poppins",
                             color: darkGreyColor.withOpacity(0.6)),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          if (!isAnimating) {
-                            setState(() {
-                              isAnimating = true;
-                            });
-
-                            Future.delayed(Duration(milliseconds: 300), () {
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            if (!isAnimating) {
                               setState(() {
-                                isOn = !isOn;
-                                isAnimating = false;
+                                isAnimating = true;
                               });
-                            });
-                          }
-                        },
-                        child: Container(
-                          height: 31,
-                          width: 51,
-                          margin: EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Color(0xFFC9CED7), Color(0xFFE1E8F1)],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.8),
-                                offset: Offset(0, -0.5),
-                                blurRadius: 5,
-                                spreadRadius: -3,
+
+                              Future.delayed(Duration(milliseconds: 300), () {
+                                setState(() {
+                                  isOn = !isOn;
+                                  isAnimating = false;
+                                });
+                              });
+                            }
+                          },
+                          child: Container(
+                            height: 31,
+                            width: 51,
+                            margin: EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xFFC9CED7), Color(0xFFE1E8F1)],
                               ),
-                            ],
-                          ),
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                left: isOn ? 20.0 : 0.0,
-                                child: AnimatedContainer(
-                                  duration: Duration(
-                                      milliseconds:
-                                          300), // Smooth animation duration
-                                  width: 31,
-                                  height: 31,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: isOn
-                                          ? [
-                                              blueColor,
-                                              greenColor
-                                            ] // Inner circle gradient when isOn is true
-                                          : [whiteColor, greyColor],
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.8),
+                                  offset: Offset(0, -0.5),
+                                  blurRadius: 5,
+                                  spreadRadius: -3,
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  left: isOn ? 20.0 : 0.0,
+                                  child: AnimatedContainer(
+                                    duration: Duration(
+                                        milliseconds:
+                                            300), // Smooth animation duration
+                                    width: 31,
+                                    height: 31,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: isOn
+                                            ? [
+                                                blueColor,
+                                                greenColor
+                                              ] // Inner circle gradient when isOn is true
+                                            : [whiteColor, greyColor],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       )
                     ],
                   ),
-                )
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _refreshData();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    margin: EdgeInsets.symmetric(horizontal: 15, vertical: 46),
+                    padding: EdgeInsets.symmetric(vertical: 20, horizontal: 46),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x263B4056),
+                          offset: Offset(0, 20),
+                          blurRadius: 40,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text('Cek Notif'),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -420,7 +512,11 @@ class _HomePageState extends State<HomePage> {
                         width: 18,
                       ),
                       Text(
-                        'Perlu Disiram',
+                        infoBloom['status'] == 0
+                            ? 'Perlu Disiram Air'
+                            : infoBloom['status'] == 1
+                                ? 'Perlu Diberi Cahaya'
+                                : 'Tanamanmu Sehat',
                         style: TextStyle(
                           fontWeight: semiBold,
                           color: darkGreyColor.withOpacity(0.6),

@@ -10,3 +10,8 @@ List<ChoiceItem> iotList = [
   ChoiceItem(name: 'Rosemary', isChoice: false),
   ChoiceItem(name: 'Blueberry Ponakan', isChoice: false),
 ];
+
+Map<String, dynamic> infoBloom = {
+  'status': 0, //0 perlu disiram //1 perlu diberi cahaya
+  'name': 'MyJasmine',
+};
