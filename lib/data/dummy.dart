@@ -12,6 +12,6 @@ List<ChoiceItem> iotList = [
 ];
 
 Map<String, dynamic> infoBloom = {
-  'status': 0, //0 perlu disiram //1 perlu diberi cahaya
+  'status': 0, //0 perlu disiram //1 perlu diberi cahaya //2 tanaman sedang baik
   'name': 'MyJasmine',
 };
