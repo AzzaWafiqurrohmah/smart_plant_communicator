@@ -560,7 +560,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -582,7 +582,7 @@ class _HomePageState extends State<HomePage> {
           ),
           SizedBox(height: 14),
           Text(
-            type == 0 ? 'Kelembaban Tanah' : "Intensitas cahaya",
+            type == 0 ? 'Kelembapan' : "Intensitas cahaya",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: semiBold,
