@@ -26,6 +26,7 @@ class _HomePageState extends State<HomePage> {
 
   Map<String, dynamic> plantData = {};
   String selectedPlant = ''; 
+  String name = '';
   late DatabaseReference databaseRef;
 
   @override
@@ -52,6 +53,7 @@ class _HomePageState extends State<HomePage> {
         temperature = (plantData[selectedPlant]['temperature'] as num?)?.toDouble() ?? 0.0;
         humidity = (plantData[selectedPlant]['humidity'] as num?)?.toDouble() ?? 0.0;
         intensity = (plantData[selectedPlant]['intensity'] as num?)?.toDouble() ?? 0.0;
+        name = plantData[selectedPlant]['name'];
       }
     });
   }
@@ -70,9 +72,10 @@ class _HomePageState extends State<HomePage> {
   void changePlant(String plantName) {
     setState(() {
       selectedPlant = plantName;
-      temperature = plantData[selectedPlant]['temperature'];
-      humidity = plantData[selectedPlant]['humidity'];
-      intensity = plantData[selectedPlant]['intensity'];
+      temperature = (plantData[selectedPlant]['temperature'] as num?)?.toDouble() ?? 0.0;
+      humidity = (plantData[selectedPlant]['humidity'] as num?)?.toDouble() ?? 0.0;
+      intensity = (plantData[selectedPlant]['intensity'] as num?)?.toDouble() ?? 0.0;
+      name = plantData[selectedPlant]['name'];
     });
   }
 
@@ -416,18 +419,21 @@ class _HomePageState extends State<HomePage> {
                                     SizedBox(height: 24),
                                     Expanded(
                                       child: ListView.builder(
-                                          itemCount: iotList.length,
+                                          itemCount: plantData.length,
                                           itemBuilder: (context, index) {
-                                            List<ChoiceItem> sortedList =
-                                                List.from(iotList)
-                                                  ..sort((a, b) =>
-                                                      b.isChoice ? 1 : 0);
-                                            final item = sortedList[index];
+                                            final data = List.from(plantData.entries)
+                                                      ..sort((a, b) {
+                                                        if (a.key == selectedPlant && b.key != selectedPlant) return -1;
+                                                        if (b.key == selectedPlant && a.key != selectedPlant) return 1;
+                                                        return 0;
+                                                      });
+                                            final item = data[index];
+
                                             return Padding(
                                               padding: EdgeInsets.symmetric(
                                                   vertical: 8),
-                                              child: CardIoT(item.name,
-                                                  item.isChoice, index),
+                                              child: CardIoT(item.value['name'],
+                                                  item.key, index),
                                             );
                                           }),
                                     )
@@ -449,11 +455,12 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          iotList
-                              .firstWhere((item) => item.isChoice,
-                                  orElse: () =>
-                                      ChoiceItem(name: '', isChoice: false))
-                              .name,
+                          // iotList
+                          //     .firstWhere((item) => item.isChoice,
+                          //         orElse: () =>
+                          //             ChoiceItem(name: '', isChoice: false))
+                          //     .name,
+                          name,
                           style: TextStyle(
                               fontSize: 17,
                               color: darkGreyColor.withOpacity(0.6)),
@@ -585,15 +592,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget CardIoT(name, isChoice, index) {
+  Widget CardIoT(name, device, index) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          for (int i = 0; i < iotList.length; i++) {
-            iotList[i].isChoice = false;
-          }
-          iotList[index].isChoice = true;
-        });
+        changePlant(device);
         Navigator.pop(context);
       },
       child: Container(
@@ -625,7 +627,7 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: isChoice
+                  colors: device == selectedPlant 
                       ? [blueColor, greenColor]
                       : [whiteColor, greyColor],
                 ),
