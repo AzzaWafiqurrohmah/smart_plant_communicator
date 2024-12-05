@@ -5,6 +5,7 @@ import 'package:simple_gradient_text/simple_gradient_text.dart';
 import 'package:smart_plant_communicator/data/dummy.dart';
 import 'package:smart_plant_communicator/shared/theme.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,65 +22,67 @@ class _HomePageState extends State<HomePage> {
   bool isAnimating = false;
   String inputTextToken = '';
   String inputTextName = '';
+  double? temperature = 0, humidity = 0, intensity = 0; 
+
+  Map<String, dynamic> plantData = {};
+  String selectedPlant = ''; 
+  late DatabaseReference databaseRef;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    _initializeNotifications();
+    databaseRef = FirebaseDatabase.instance.ref().child('iot');
+    addFirebaseListener();
+  }
+
+  void addFirebaseListener() {
+    databaseRef.onValue.listen((DatabaseEvent event) {
+      if (event.snapshot.exists) {
+        updatePlantData(event.snapshot.value as Map);
+      }
+    });
+  }
+
+  void updatePlantData(Map<dynamic, dynamic> firebaseData) {
+    setState(() {
+      plantData = Map<String, dynamic>.from(firebaseData);
+      selectedPlant = plantData.keys.isNotEmpty ? plantData.keys.first : '';
+
+      if (selectedPlant.isNotEmpty) {
+        temperature = (plantData[selectedPlant]['temperature'] as num?)?.toDouble() ?? 0.0;
+        humidity = (plantData[selectedPlant]['humidity'] as num?)?.toDouble() ?? 0.0;
+        intensity = (plantData[selectedPlant]['intensity'] as num?)?.toDouble() ?? 0.0;
+      }
+    });
+  }
+
+  // Fungsi untuk menghentikan listener
+  void removeFirebaseListener() {
+    databaseRef.onValue.drain();
+  }
+
+  @override
+  void dispose() {
+    removeFirebaseListener();
+    super.dispose();
+  }
+
+  void changePlant(String plantName) {
+    setState(() {
+      selectedPlant = plantName;
+      temperature = plantData[selectedPlant]['temperature'];
+      humidity = plantData[selectedPlant]['humidity'];
+      intensity = plantData[selectedPlant]['intensity'];
+    });
   }
 
   bool notificationShown = false;
   void _refreshData() {
     setState(() {
-      // trashBin = getTrashBinData();
       notificationShown = false;
-      checkTrashStatusAndNotify(infoBloom);
     });
   }
 
-  void _initializeNotifications() async {
-    var initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    var initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
-  void _showNotification(String title, String message) async {
-    var androidDetails = AndroidNotificationDetails(
-      'channel_id',
-      'channel_name',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-
-    var notificationDetails = NotificationDetails(android: androidDetails);
-
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      title,
-      message,
-      notificationDetails,
-    );
-  }
-
-  void checkTrashStatusAndNotify(Map<String, dynamic> infoBloom) {
-    if (infoBloom['status'] == 0 && !notificationShown) {
-      _showNotification(
-        infoBloom['name'],
-        'Perlu Disiram Air',
-      );
-      notificationShown = true;
-    } else if (infoBloom['status'] == 1 && !notificationShown) {
-      _showNotification(
-        infoBloom['name'],
-        'Perlu Diberi Cahaya',
-      );
-      notificationShown = true;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,31 +194,6 @@ class _HomePageState extends State<HomePage> {
                         ),
                       )
                     ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    _refreshData();
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    margin: EdgeInsets.symmetric(horizontal: 15, vertical: 46),
-                    padding: EdgeInsets.symmetric(vertical: 20, horizontal: 46),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0x263B4056),
-                          offset: Offset(0, 20),
-                          blurRadius: 40,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text('Cek Notif'),
-                    ),
                   ),
                 ),
               ],
@@ -332,7 +310,7 @@ class _HomePageState extends State<HomePage> {
                                   color:
                                       const Color.fromRGBO(238, 79, 34, 0.65)),
                             ],
-                            annotations: const <GaugeAnnotation>[
+                            annotations: <GaugeAnnotation>[
                               GaugeAnnotation(
                                   angle: 90,
                                   positionFactor: 0.35,
@@ -344,7 +322,7 @@ class _HomePageState extends State<HomePage> {
                                 angle: 90,
                                 positionFactor: 0.8,
                                 widget: Text(
-                                  '  22.5  ',
+                                  "Suhu: ${temperature ?? '0'}°C", //temperature's value
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20),
@@ -353,7 +331,7 @@ class _HomePageState extends State<HomePage> {
                             ],
                             pointers: <GaugePointer>[
                               NeedlePointer(
-                                value: 22.5,
+                                value: temperature ?? 0, // temperature's value
                                 needleStartWidth: isCardView ? 0 : 1,
                                 needleEndWidth: isCardView ? 5 : 8,
                                 animationType: AnimationType.easeOutBack,
@@ -593,7 +571,7 @@ class _HomePageState extends State<HomePage> {
           ),
           SizedBox(height: 5),
           Text(
-            type == 0 ? '5%' : '10°',
+            type == 0 ? '${humidity}°' : '${intensity}°',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: semiBold,
