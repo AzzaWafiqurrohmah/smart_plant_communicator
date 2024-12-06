@@ -6,6 +6,7 @@ import 'package:smart_plant_communicator/data/dummy.dart';
 import 'package:smart_plant_communicator/shared/theme.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,7 +19,8 @@ class _HomePageState extends State<HomePage> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  bool isOn = true;
+  bool isOn = false;
+  bool isSubscribed = false;
   bool isAnimating = false;
   String inputTextToken = '';
   String inputTextName = '';
@@ -136,18 +138,37 @@ class _HomePageState extends State<HomePage> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             if (!isAnimating) {
                               setState(() {
                                 isAnimating = true;
                               });
 
-                              Future.delayed(Duration(milliseconds: 300), () {
+                              try {
+                                if (isSubscribed) {
+                                  await FirebaseMessaging.instance.unsubscribeFromTopic("smartPlant");
+                                  print("Unsubscribed from topic: smartPlant");
+                                } else {
+                                  await FirebaseMessaging.instance.subscribeToTopic("smartPlant");
+                                  print("Subscribed to topic: smartPlant");
+                                }
+
                                 setState(() {
-                                  isOn = !isOn;
+                                  isSubscribed = !isSubscribed;
+                                });
+
+                                Future.delayed(Duration(milliseconds: 300), () {
+                                  setState(() {
+                                    isOn = !isOn;
+                                    isAnimating = false; 
+                                  });
+                                });
+                              } catch (error) {
+                                print("Error managing subscription: $error");
+                                setState(() {
                                   isAnimating = false;
                                 });
-                              });
+                              }
                             }
                           },
                           child: Container(

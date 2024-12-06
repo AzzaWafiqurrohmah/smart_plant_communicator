@@ -1,26 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
-class ChoiceItem {
-  String name;
-  bool isChoice;
-
-  ChoiceItem({required this.name, required this.isChoice});
-}
-
-List<ChoiceItem> iotList = [
-  ChoiceItem(name: 'JasmineKu', isChoice: true),
-  ChoiceItem(name: 'Rosemary', isChoice: false),
-  ChoiceItem(name: 'Blueberry Ponakan', isChoice: false),
-];
-
-Map<String, dynamic> infoBloom = {
-  'status': 0, //0 perlu disiram //1 perlu diberi cahaya //2 tanaman sedang baik
-  'name': 'MyJasmine',
-};
-
-
-
 Future<void> updatestatus(BuildContext context, String device, String name) async {
   DatabaseReference ref = FirebaseDatabase.instance.ref("devices/$device");
 
