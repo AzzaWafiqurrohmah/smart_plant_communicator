@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
 
   Map<String, dynamic> plantData = {};
   String selectedPlant = ''; 
-  String name = '';
+  String name = '', condition = '';
   late DatabaseReference databaseRef;
 
   @override
@@ -54,6 +54,7 @@ class _HomePageState extends State<HomePage> {
         humidity = (plantData[selectedPlant]['humidity'] as num?)?.toDouble() ?? 0.0;
         intensity = (plantData[selectedPlant]['intensity'] as num?)?.toDouble() ?? 0.0;
         name = plantData[selectedPlant]['name'];
+        condition = plantData[selectedPlant]['condition'];
       }
     });
   }
@@ -76,6 +77,7 @@ class _HomePageState extends State<HomePage> {
       humidity = (plantData[selectedPlant]['humidity'] as num?)?.toDouble() ?? 0.0;
       intensity = (plantData[selectedPlant]['intensity'] as num?)?.toDouble() ?? 0.0;
       name = plantData[selectedPlant]['name'];
+      condition = plantData[selectedPlant]['condition'];
     });
   }
 
@@ -497,11 +499,7 @@ class _HomePageState extends State<HomePage> {
                         width: 18,
                       ),
                       Text(
-                        infoBloom['status'] == 0
-                            ? 'Perlu Disiram Air'
-                            : infoBloom['status'] == 1
-                                ? 'Perlu Diberi Cahaya'
-                                : 'Tanamanmu Sehat',
+                        condition,
                         style: TextStyle(
                           fontWeight: semiBold,
                           color: darkGreyColor.withOpacity(0.6),
