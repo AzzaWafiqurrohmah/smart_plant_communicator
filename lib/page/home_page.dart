@@ -567,7 +567,7 @@ class _HomePageState extends State<HomePage> {
           ),
           SizedBox(height: 14),
           Text(
-            type == 0 ? 'Kelembapan' : "Intensitas cahaya",
+            type == 0 ? 'Kelembapan Tanah' : "Intensitas cahaya",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: semiBold,
@@ -692,18 +692,76 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (result != null && result.isNotEmpty) {
-      String newName = result['name'] ?? '';
-
-      setState(() {
-        for (var item in iotList) {
-          item.isChoice = false;
-        }
-
-        iotList.add(ChoiceItem(name: newName, isChoice: true));
-      });
+      updatestatus(context, result['token'] ?? '', result['name'] ?? '');
     }
   }
 }
+
+Future<void> updatestatus(BuildContext context, String device, String name) async {
+  DatabaseReference ref = FirebaseDatabase.instance.ref("devices/$device");
+
+  try {
+    final snapshot = await ref.get();
+    if (!snapshot.exists) {
+      await showAlertDialog(
+      context,
+      "Error",
+      "Perangkat dengan token tersebut tidak ditemukan.",
+    );
+    }
+
+    if (snapshot.exists) {
+      await ref.update({
+        "status" : 'active'
+      });
+
+      DatabaseReference refSet = FirebaseDatabase.instance.ref("iot/$device");
+      await refSet.set({
+        "name": name,
+        "notified": 0,
+        "humidity": 0,
+        "intensity": 0,
+        "temperature": 0,
+        "condition": "Aku sehat"
+      });
+      
+      await showAlertDialog(
+        context,
+        "Sukses",
+        "Perangkat Berhasil Dihubungkan",
+      );
+    }
+    print("Age updated successfully!");
+  } catch (error) {
+    await showAlertDialog(
+          context,
+          "Error",
+          "Terjadi kesalahan",
+        );
+    print("Failed to update age: $error");
+  }
+}
+
+Future<void> showAlertDialog(BuildContext context, String title, String message) async {
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text("OK"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
 class GradientIcon extends StatelessWidget {
   final List<Color> colors;
